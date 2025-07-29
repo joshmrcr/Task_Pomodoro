@@ -12,23 +12,24 @@ import Svg, { Circle } from "react-native-svg";
 import Colors from "../../constants/colors";
 
 export default function PomodoroScreen() {
-  // Default times
   const [focusDuration, setFocusDuration] = useState(25 * 60);
   const [breakDuration, setBreakDuration] = useState(15 * 60);
   const [time, setTime] = useState(focusDuration);
-
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [customFocus, setCustomFocus] = useState("");
   const [customBreak, setCustomBreak] = useState("");
+  const [modeSelection, setModeSelection] = useState<"focus" | "break">(
+    "focus"
+  );
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const radius = 130;
   const circumference = 2 * Math.PI * radius;
   const maxTime = isBreak ? breakDuration : focusDuration;
-  const progress = time / maxTime; // progress based on remaining time
+  const progress = time / maxTime;
   const strokeDashoffset = circumference * (1 - progress);
 
   const formatTime = (seconds: number) => {
@@ -52,19 +53,41 @@ export default function PomodoroScreen() {
     setIsRunning(false);
   };
 
+  const getEncouragement = () => {
+    const percent = progress * 100;
+    if (isBreak) {
+      if (percent > 75) return "Relax, you deserve this!";
+      if (percent > 50) return "Unwind and recharge.";
+      if (percent > 25) return "Almost back to focus!";
+      return "Get ready to crush it!";
+    } else {
+      if (percent > 75) return "You got this!";
+      if (percent > 50) return "Keep going!";
+      if (percent > 25) return "Halfway there!";
+      return "Almost done!";
+    }
+  };
+
   const saveCustomTimes = () => {
     const focusMinutes = parseInt(customFocus);
     const breakMinutes = parseInt(customBreak);
 
-    if (!isNaN(focusMinutes) && focusMinutes > 0) {
+    if (!isNaN(focusMinutes) && focusMinutes > 0)
       setFocusDuration(focusMinutes * 60);
-      if (!isBreak) setTime(focusMinutes * 60);
-    }
-
-    if (!isNaN(breakMinutes) && breakMinutes > 0) {
+    if (!isNaN(breakMinutes) && breakMinutes > 0)
       setBreakDuration(breakMinutes * 60);
-      if (isBreak) setTime(breakMinutes * 60);
-    }
+
+    const newIsBreak = modeSelection === "break";
+    setIsBreak(newIsBreak);
+    setTime(
+      newIsBreak
+        ? breakMinutes
+          ? breakMinutes * 60
+          : breakDuration
+        : focusMinutes
+        ? focusMinutes * 60
+        : focusDuration
+    );
 
     setModalVisible(false);
     setIsRunning(false);
@@ -77,7 +100,6 @@ export default function PomodoroScreen() {
         setTime((prev) => {
           if (prev <= 1) {
             clearInterval(intervalRef.current!);
-            // Switch between Focus and Break
             if (isBreak) {
               setIsBreak(false);
               return focusDuration;
@@ -110,15 +132,15 @@ export default function PomodoroScreen() {
             cx="150"
             cy="150"
             r={radius}
-            stroke={isBreak ? Colors.accent : Colors.primary}
+            stroke={isBreak ? Colors.primary : Colors.green}
             strokeWidth="22"
             fill="none"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            rotation={-90} // <--- Rotates the circle
-            originX="150" // <--- Pivot at circle center
-            originY="150" // <--- Pivot at circle center
+            rotation={-90}
+            originX="150"
+            originY="150"
           />
         </Svg>
         <View style={styles.timerTextWrapper}>
@@ -127,23 +149,39 @@ export default function PomodoroScreen() {
         </View>
       </View>
 
-      {/* Buttons */}
+      <View>
+        <Text style={styles.encourageText}>{getEncouragement()}</Text>
+      </View>
+
+      {/* Buttons Row */}
       <View style={styles.buttonsRow}>
         <TouchableOpacity style={styles.controlButton} onPress={restart}>
-          <Ionicons name="refresh" size={32} color={Colors.primary} />
+          <Ionicons name="refresh" size={32} color={Colors.secondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={startPause}>
+
+        {/* Circular Play/Pause Button */}
+        <TouchableOpacity
+          style={[
+            styles.playPauseButton,
+            { backgroundColor: isBreak ? Colors.primary : Colors.green },
+          ]}
+          onPress={startPause}
+        >
           <Ionicons
             name={isRunning ? "pause" : "play"}
-            size={48}
-            color={Colors.primary}
+            size={42}
+            color="#fff"
           />
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.controlButton}
-          onPress={() => setModalVisible(true)}
+          onPress={() => {
+            setModeSelection(isBreak ? "break" : "focus");
+            setModalVisible(true);
+          }}
         >
-          <Ionicons name="create-outline" size={32} color={Colors.primary} />
+          <Ionicons name="create-outline" size={32} color={Colors.secondary} />
         </TouchableOpacity>
       </View>
 
@@ -166,6 +204,43 @@ export default function PomodoroScreen() {
               value={customBreak}
               onChangeText={setCustomBreak}
             />
+
+            {/* Mode Switch */}
+            <View style={styles.switchContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.switchOption,
+                  modeSelection === "focus" && styles.switchSelected,
+                ]}
+                onPress={() => setModeSelection("focus")}
+              >
+                <Text
+                  style={[
+                    styles.switchText,
+                    modeSelection === "focus" && styles.switchTextSelected,
+                  ]}
+                >
+                  Focus
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.switchOption,
+                  modeSelection === "break" && styles.switchSelected,
+                ]}
+                onPress={() => setModeSelection("break")}
+              >
+                <Text
+                  style={[
+                    styles.switchText,
+                    modeSelection === "break" && styles.switchTextSelected,
+                  ]}
+                >
+                  Break
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
               style={styles.saveButton}
               onPress={saveCustomTimes}
@@ -209,8 +284,21 @@ const styles = StyleSheet.create({
     marginTop: 50,
     justifyContent: "space-between",
     width: "80%",
+    alignItems: "center",
   },
   controlButton: { alignItems: "center" },
+  playPauseButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -234,6 +322,27 @@ const styles = StyleSheet.create({
     width: "100%",
     textAlign: "center",
   },
+  switchContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+  },
+  switchOption: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  switchSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  switchText: { color: "#333", fontWeight: "600" },
+  switchTextSelected: { color: "#fff" },
   saveButton: {
     backgroundColor: Colors.primary,
     padding: 12,
@@ -242,4 +351,11 @@ const styles = StyleSheet.create({
   },
   saveButtonText: { textAlign: "center", color: "#fff", fontWeight: "bold" },
   cancelButton: { marginTop: 10, alignSelf: "center" },
+  encourageText: {
+    fontSize: 16,
+    color: "#555",
+    marginTop: 8,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
 });
