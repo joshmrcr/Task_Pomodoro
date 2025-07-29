@@ -17,9 +17,13 @@ import Colors from "../../constants/colors";
 export default function HomeScreen() {
   const { username, avatar } = useLocalSearchParams();
   const [selectedTab, setSelectedTab] = useState<"daily" | "weekly">("daily");
-  const [tasks, setTasks] = useState<
-    { id: string; text: string; completed: boolean }[]
-  >([]);
+  const [tasks, setTasks] = useState<{
+    daily: { id: string; text: string; completed: boolean }[];
+    weekly: { id: string; text: string; completed: boolean }[];
+  }>({
+    daily: [],
+    weekly: [],
+  });
   const [modalVisible, setModalVisible] = useState(false);
   const [currentTask, setCurrentTask] = useState<string>("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -27,19 +31,21 @@ export default function HomeScreen() {
   const handleSaveTask = () => {
     if (!currentTask.trim())
       return Alert.alert("Error", "Task cannot be empty");
-    if (editingTaskId) {
-      setTasks((prev) =>
-        prev.map((t) =>
+    setTasks((prev) => {
+      const updatedTasks = { ...prev };
+      if (editingTaskId) {
+        updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t) =>
           t.id === editingTaskId ? { ...t, text: currentTask } : t
-        )
-      );
-      setEditingTaskId(null);
-    } else {
-      setTasks((prev) => [
-        ...prev,
-        { id: Date.now().toString(), text: currentTask, completed: false },
-      ]);
-    }
+        );
+      } else {
+        updatedTasks[selectedTab] = [
+          ...updatedTasks[selectedTab],
+          { id: Date.now().toString(), text: currentTask, completed: false },
+        ];
+      }
+      return updatedTasks;
+    });
+    setEditingTaskId(null);
     setCurrentTask("");
     setModalVisible(false);
   };
@@ -51,13 +57,23 @@ export default function HomeScreen() {
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks((prev) => {
+      const updatedTasks = { ...prev };
+      updatedTasks[selectedTab] = updatedTasks[selectedTab].filter(
+        (t) => t.id !== id
+      );
+      return updatedTasks;
+    });
   };
 
   const toggleComplete = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+    setTasks((prev) => {
+      const updatedTasks = { ...prev };
+      updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      );
+      return updatedTasks;
+    });
   };
 
   return (
@@ -123,10 +139,15 @@ export default function HomeScreen() {
 
       {/* Task List */}
       <FlatList
-        data={tasks}
+        data={tasks[selectedTab]}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.taskItem}>
+          <View
+            style={[
+              styles.taskItem,
+              item.completed && { backgroundColor: "#C8E6C9" }, // Light green for completed
+            ]}
+          >
             <TouchableOpacity onPress={() => toggleComplete(item.id)}>
               <Ionicons
                 name={
@@ -198,7 +219,11 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={{ color: "red", marginTop: 10 }}>Cancel</Text>
+              <Text
+                style={{ color: "red", marginTop: 10, alignSelf: "center" }}
+              >
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -208,10 +233,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F1F1F1",
-  },
+  container: { flex: 1, backgroundColor: "#EEEEEE" },
 
   header: {
     flexDirection: "row",
@@ -230,21 +252,14 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 18, fontWeight: "bold", color: Colors.text },
 
-  content: {
-    flex: 1,
-    marginHorizontal: 20, // <-- body content has margin
-    marginTop: 20,
-  },
-
   tabContainer: {
     flexDirection: "row",
     marginBottom: 20,
     borderRadius: 8,
     overflow: "hidden",
     backgroundColor: "#ddd",
+    marginHorizontal: 20,
     marginTop: 10,
-    marginRight: 20,
-    marginLeft: 20,
   },
   tabButton: {
     flex: 1,
@@ -265,12 +280,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 10,
-    marginRight: 20,
-    marginLeft: 20,
+    marginHorizontal: 20,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   taskText: { fontSize: 16, flex: 1 },
   taskActions: { flexDirection: "row", gap: 15 },
-
   emptyText: { textAlign: "center", color: "#888", marginTop: 20 },
 
   addButton: {
