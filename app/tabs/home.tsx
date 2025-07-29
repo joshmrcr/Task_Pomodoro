@@ -17,56 +17,48 @@ import Colors from "../../constants/colors";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [user, setUser] = useState<{ username: string; avatar: string }>({
-    username: "Guest",
-    avatar: "",
+  const [appData, setAppData] = useState<any>({
+    user: { username: "Guest", avatar: "" },
+    tasks: { daily: [], weekly: [] },
   });
   const [selectedTab, setSelectedTab] = useState<"daily" | "weekly">("daily");
-  const [tasks, setTasks] = useState<{
-    daily: { id: string; text: string; completed: boolean }[];
-    weekly: { id: string; text: string; completed: boolean }[];
-  }>({
-    daily: [],
-    weekly: [],
-  });
   const [modalVisible, setModalVisible] = useState(false);
   const [currentTask, setCurrentTask] = useState<string>("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
-  // Load user & tasks from storage
+  // Load data from storage
   useEffect(() => {
     const loadData = async () => {
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedUser) setUser(JSON.parse(savedUser));
-
-      const savedTasks = await AsyncStorage.getItem("tasks");
-      if (savedTasks) setTasks(JSON.parse(savedTasks));
+      const savedData = await AsyncStorage.getItem("appData");
+      if (savedData) {
+        setAppData(JSON.parse(savedData));
+      }
     };
     loadData();
   }, []);
 
-  // Save tasks when they change
-  useEffect(() => {
-    AsyncStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  // Save changes whenever appData.tasks changes
+  const saveTasks = async (updatedTasks: any) => {
+    const newData = { ...appData, tasks: updatedTasks };
+    setAppData(newData);
+    await AsyncStorage.setItem("appData", JSON.stringify(newData));
+  };
 
   const handleSaveTask = () => {
     if (!currentTask.trim())
       return Alert.alert("Error", "Task cannot be empty");
-    setTasks((prev) => {
-      const updatedTasks = { ...prev };
-      if (editingTaskId) {
-        updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t) =>
-          t.id === editingTaskId ? { ...t, text: currentTask } : t
-        );
-      } else {
-        updatedTasks[selectedTab] = [
-          ...updatedTasks[selectedTab],
-          { id: Date.now().toString(), text: currentTask, completed: false },
-        ];
-      }
-      return updatedTasks;
-    });
+    const updatedTasks = { ...appData.tasks };
+    if (editingTaskId) {
+      updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t: any) =>
+        t.id === editingTaskId ? { ...t, text: currentTask } : t
+      );
+    } else {
+      updatedTasks[selectedTab] = [
+        ...updatedTasks[selectedTab],
+        { id: Date.now().toString(), text: currentTask, completed: false },
+      ];
+    }
+    saveTasks(updatedTasks);
     setEditingTaskId(null);
     setCurrentTask("");
     setModalVisible(false);
@@ -79,23 +71,19 @@ export default function HomeScreen() {
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks((prev) => {
-      const updatedTasks = { ...prev };
-      updatedTasks[selectedTab] = updatedTasks[selectedTab].filter(
-        (t) => t.id !== id
-      );
-      return updatedTasks;
-    });
+    const updatedTasks = { ...appData.tasks };
+    updatedTasks[selectedTab] = updatedTasks[selectedTab].filter(
+      (t: any) => t.id !== id
+    );
+    saveTasks(updatedTasks);
   };
 
   const toggleComplete = (id: string) => {
-    setTasks((prev) => {
-      const updatedTasks = { ...prev };
-      updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      );
-      return updatedTasks;
-    });
+    const updatedTasks = { ...appData.tasks };
+    updatedTasks[selectedTab] = updatedTasks[selectedTab].map((t: any) =>
+      t.id === id ? { ...t, completed: !t.completed } : t
+    );
+    saveTasks(updatedTasks);
   };
 
   return (
@@ -105,18 +93,20 @@ export default function HomeScreen() {
         <TouchableOpacity onPress={() => router.push("/")}>
           <Image
             source={
-              user.avatar
-                ? { uri: user.avatar }
+              appData.user.avatar
+                ? { uri: appData.user.avatar }
                 : require("../../assets/images/default-avatar.png")
             }
             style={styles.avatar}
             resizeMode="cover"
           />
         </TouchableOpacity>
-        <Text style={styles.greeting}>Hello, {user.username || "Guest"}!</Text>
+        <Text style={styles.greeting}>
+          Hello, {appData.user.username || "Guest"}!
+        </Text>
       </View>
 
-      {/* Tabs for Daily/Weekly */}
+      {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
@@ -164,7 +154,7 @@ export default function HomeScreen() {
 
       {/* Task List */}
       <FlatList
-        data={tasks[selectedTab]}
+        data={appData.tasks[selectedTab]}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View
@@ -217,7 +207,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
       />
 
-      {/* Floating Add Task Button */}
+      {/* Add Task Button */}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setModalVisible(true)}
@@ -225,7 +215,7 @@ export default function HomeScreen() {
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
-      {/* Add Task Modal */}
+      {/* Add/Edit Task Modal */}
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>

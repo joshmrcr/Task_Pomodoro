@@ -21,18 +21,18 @@ export default function WelcomeScreen() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load saved user
+  // Load saved data
   useEffect(() => {
-    const loadUser = async () => {
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setUsername(parsed.username);
-        setAvatar(parsed.avatar);
+    const loadData = async () => {
+      const savedData = await AsyncStorage.getItem("appData");
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setUsername(parsed.user.username);
+        setAvatar(parsed.user.avatar);
       }
       setLoading(false);
     };
-    loadUser();
+    loadData();
   }, []);
 
   const pickImage = async () => {
@@ -56,8 +56,20 @@ export default function WelcomeScreen() {
   };
 
   const handleGetStarted = async () => {
-    const newUserData = { username: username || "Guest", avatar: avatar || "" };
-    await AsyncStorage.setItem("user", JSON.stringify(newUserData)); // Save user only
+    const savedData = await AsyncStorage.getItem("appData");
+    let tasks = { daily: [], weekly: [] };
+
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      tasks = parsed.tasks || tasks;
+    }
+
+    const newData = {
+      user: { username: username || "Guest", avatar: avatar || "" },
+      tasks,
+    };
+
+    await AsyncStorage.setItem("appData", JSON.stringify(newData));
     router.replace("/tabs/home");
   };
 
@@ -160,7 +172,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     width: "100%",
-
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
