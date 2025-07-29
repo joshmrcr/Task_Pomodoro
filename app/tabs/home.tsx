@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -16,7 +16,11 @@ import {
 import Colors from "../../constants/colors";
 
 export default function HomeScreen() {
-  const { username, avatar } = useLocalSearchParams();
+  const router = useRouter();
+  const [user, setUser] = useState<{ username: string; avatar: string }>({
+    username: "Guest",
+    avatar: "",
+  });
   const [selectedTab, setSelectedTab] = useState<"daily" | "weekly">("daily");
   const [tasks, setTasks] = useState<{
     daily: { id: string; text: string; completed: boolean }[];
@@ -29,18 +33,21 @@ export default function HomeScreen() {
   const [currentTask, setCurrentTask] = useState<string>("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
-  // Load tasks on mount
+  // Load user & tasks from storage
   useEffect(() => {
-    const loadTasks = async () => {
-      const storedTasks = await AsyncStorage.getItem("userTasks");
-      if (storedTasks) setTasks(JSON.parse(storedTasks));
+    const loadData = async () => {
+      const savedUser = await AsyncStorage.getItem("user");
+      if (savedUser) setUser(JSON.parse(savedUser));
+
+      const savedTasks = await AsyncStorage.getItem("tasks");
+      if (savedTasks) setTasks(JSON.parse(savedTasks));
     };
-    loadTasks();
+    loadData();
   }, []);
 
-  // Save tasks when updated
+  // Save tasks when they change
   useEffect(() => {
-    AsyncStorage.setItem("userTasks", JSON.stringify(tasks));
+    AsyncStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
   const handleSaveTask = () => {
@@ -95,15 +102,18 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={
-            avatar
-              ? { uri: avatar as string }
-              : require("../../assets/images/default-avatar.png")
-          }
-          style={styles.avatar}
-        />
-        <Text style={styles.greeting}>Hello, {username || "Guest"}!</Text>
+        <TouchableOpacity onPress={() => router.push("/")}>
+          <Image
+            source={
+              user.avatar
+                ? { uri: user.avatar }
+                : require("../../assets/images/default-avatar.png")
+            }
+            style={styles.avatar}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+        <Text style={styles.greeting}>Hello, {user.username || "Guest"}!</Text>
       </View>
 
       {/* Tabs for Daily/Weekly */}
@@ -249,7 +259,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#EEEEEE" },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -266,7 +275,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   greeting: { fontSize: 18, fontWeight: "bold", color: Colors.text },
-
   tabContainer: {
     flexDirection: "row",
     marginBottom: 20,
@@ -286,7 +294,6 @@ const styles = StyleSheet.create({
   },
   activeTab: { backgroundColor: Colors.primary },
   tabText: { fontSize: 16, color: Colors.text, fontWeight: "600" },
-
   taskItem: {
     backgroundColor: "#fff",
     padding: 15,
@@ -296,7 +303,6 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 10,
     marginHorizontal: 20,
-
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -306,7 +312,6 @@ const styles = StyleSheet.create({
   taskText: { fontSize: 16, flex: 1 },
   taskActions: { flexDirection: "row", gap: 15 },
   emptyText: { textAlign: "center", color: "#888", marginTop: 20 },
-
   addButton: {
     position: "absolute",
     bottom: 80,
@@ -319,7 +324,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
   },
-
   modalContainer: {
     flex: 1,
     justifyContent: "center",

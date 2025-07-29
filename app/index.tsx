@@ -21,26 +21,18 @@ export default function WelcomeScreen() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user data already exists
+  // Load saved user
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const savedUsername = await AsyncStorage.getItem("username");
-        const savedAvatar = await AsyncStorage.getItem("avatar");
-        if (savedUsername) {
-          // Skip welcome if data exists
-          router.replace({
-            pathname: "/tabs/home",
-            params: { username: savedUsername, avatar: savedAvatar || "" },
-          });
-        }
-      } catch (e) {
-        console.error("Error loading user data", e);
-      } finally {
-        setLoading(false);
+    const loadUser = async () => {
+      const savedUser = await AsyncStorage.getItem("user");
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        setUsername(parsed.username);
+        setAvatar(parsed.avatar);
       }
+      setLoading(false);
     };
-    loadUserData();
+    loadUser();
   }, []);
 
   const pickImage = async () => {
@@ -64,26 +56,18 @@ export default function WelcomeScreen() {
   };
 
   const handleGetStarted = async () => {
-    if (!username.trim())
-      return Alert.alert("Error", "Please enter a username");
-    try {
-      await AsyncStorage.setItem("username", username);
-      if (avatar) await AsyncStorage.setItem("avatar", avatar);
-      router.push({
-        pathname: "/tabs/home",
-        params: { username, avatar: avatar || "" },
-      });
-    } catch (e) {
-      console.error("Error saving user data", e);
-    }
+    const newUserData = { username: username || "Guest", avatar: avatar || "" };
+    await AsyncStorage.setItem("user", JSON.stringify(newUserData)); // Save user only
+    router.replace("/tabs/home");
   };
 
-  const resetData = async () => {
-    await AsyncStorage.clear();
-    Alert.alert("Data Reset", "All data has been cleared.");
-  };
-
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -97,7 +81,6 @@ export default function WelcomeScreen() {
               : require("../assets/images/default-avatar.png")
           }
           style={styles.avatar}
-          resizeMode="cover"
         />
         <View style={styles.iconOverlay}>
           <Ionicons name="camera" size={24} color="#fff" />
@@ -114,14 +97,6 @@ export default function WelcomeScreen() {
 
       <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
         <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
-
-      {/* Reset data button for testing */}
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "red" }]}
-        onPress={resetData}
-      >
-        <Text style={styles.buttonText}>Reset Data</Text>
       </TouchableOpacity>
     </View>
   );
@@ -185,6 +160,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     width: "100%",
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
