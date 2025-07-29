@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         // @ts-ignore (ignore deprecated warning for now)
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        // mediaTypes: [ImagePicker.MediaType.Image],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
