@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   StyleSheet,
@@ -17,12 +19,33 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check if user data already exists
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const savedUsername = await AsyncStorage.getItem("username");
+        const savedAvatar = await AsyncStorage.getItem("avatar");
+        if (savedUsername) {
+          // Skip welcome if data exists
+          router.replace({
+            pathname: "/tabs/home",
+            params: { username: savedUsername, avatar: savedAvatar || "" },
+          });
+        }
+      } catch (e) {
+        console.error("Error loading user data", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUserData();
+  }, []);
 
   const pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
-        // @ts-ignore (ignore deprecated warning for now)
-        // mediaTypes: [ImagePicker.MediaType.Image],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
@@ -40,12 +63,27 @@ export default function WelcomeScreen() {
     }
   };
 
-  const handleGetStarted = () => {
-    router.push({
-      pathname: "/tabs/home",
-      params: { username: username || "Guest", avatar: avatar || "" },
-    });
+  const handleGetStarted = async () => {
+    if (!username.trim())
+      return Alert.alert("Error", "Please enter a username");
+    try {
+      await AsyncStorage.setItem("username", username);
+      if (avatar) await AsyncStorage.setItem("avatar", avatar);
+      router.push({
+        pathname: "/tabs/home",
+        params: { username, avatar: avatar || "" },
+      });
+    } catch (e) {
+      console.error("Error saving user data", e);
+    }
   };
+
+  const resetData = async () => {
+    await AsyncStorage.clear();
+    Alert.alert("Data Reset", "All data has been cleared.");
+  };
+
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
 
   return (
     <View style={styles.container}>
@@ -59,6 +97,7 @@ export default function WelcomeScreen() {
               : require("../assets/images/default-avatar.png")
           }
           style={styles.avatar}
+          resizeMode="cover"
         />
         <View style={styles.iconOverlay}>
           <Ionicons name="camera" size={24} color="#fff" />
@@ -75,6 +114,14 @@ export default function WelcomeScreen() {
 
       <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
         <Text style={styles.buttonText}>Get Started</Text>
+      </TouchableOpacity>
+
+      {/* Reset data button for testing */}
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "red" }]}
+        onPress={resetData}
+      >
+        <Text style={styles.buttonText}>Reset Data</Text>
       </TouchableOpacity>
     </View>
   );
@@ -138,7 +185,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     width: "100%",
-
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

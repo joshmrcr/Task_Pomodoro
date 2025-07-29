@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -27,6 +28,20 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentTask, setCurrentTask] = useState<string>("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+  // Load tasks on mount
+  useEffect(() => {
+    const loadTasks = async () => {
+      const storedTasks = await AsyncStorage.getItem("userTasks");
+      if (storedTasks) setTasks(JSON.parse(storedTasks));
+    };
+    loadTasks();
+  }, []);
+
+  // Save tasks when updated
+  useEffect(() => {
+    AsyncStorage.setItem("userTasks", JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleSaveTask = () => {
     if (!currentTask.trim())
@@ -145,7 +160,7 @@ export default function HomeScreen() {
           <View
             style={[
               styles.taskItem,
-              item.completed && { backgroundColor: "#C8E6C9" }, // Light green for completed
+              item.completed && { backgroundColor: "#C8E6C9" },
             ]}
           >
             <TouchableOpacity onPress={() => toggleComplete(item.id)}>
