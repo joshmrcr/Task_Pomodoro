@@ -7,8 +7,7 @@ Task Pomodoro is a **minimalist productivity app** built with **React Native** a
 ## Features
 - 🕒 **Pomodoro Timer** to boost focus and productivity.  
 - ✅ **Task Management** for daily & weekly planning.  
-- 👤 **Customizable Profile** with username and avatar.  
-- 💾 **Persistent Storage** – keeps your data even after restart.  
+- 👤 **Customizable Profile** with username and avatar.   
 - 🎨 **Minimalist & clean design** for distraction-free productivity.
 
 ---
@@ -77,6 +76,14 @@ Task_Pomodoro/
 ├── App.json              # App configuration
 ├── package.json
 ```
+
+## Download the App
+
+You can **download and try Task Pomodoro** by scanning the QR code below:
+
+<p align="center">
+  <img src="assets/images/QR-download.png" width="200" alt="Download Task Pomodoro QR Code">
+</p>
 
 
 ## Author
