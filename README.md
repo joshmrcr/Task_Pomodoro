@@ -5,23 +5,21 @@ Task Pomodoro is a **minimalist productivity app** built with **React Native** a
 ---
 
 ## Features
-- **User Profile**: Set and save your **username** and **avatar** (persisted across sessions).
-- **Task Management**: Create, edit, and delete **daily** and **weekly tasks**.
-- **Task Completion**: Mark tasks as **completed** with a simple tap.
-- **Persistent Storage**: All data (username, avatar, tasks) is stored locally using **AsyncStorage**, so it stays even after restarting the app.
-- **Pomodoro Timer**: Focus timer to boost productivity.
-- **Minimalist UI**: Clean, distraction-free interface.
+- 🕒 **Pomodoro Timer** to boost focus and productivity.  
+- ✅ **Task Management** for daily & weekly planning.  
+- 👤 **Customizable Profile** with username and avatar.  
+- 💾 **Persistent Storage** – keeps your data even after restart.  
+- 🎨 **Minimalist & clean design** for distraction-free productivity.
 
 ---
 
 ## Screenshots
 Here are some screens of the app:
-
-![Welcome Screen](assets/images/welcome.jpg)
-![Home Screen](assets/images/home.jpg)
-![Pomodoro Screen](assets/images/pomodoro.jpg)
-
-
+<p float="left">
+  <img src="assets/images/welcome.jpg" width="300" />
+  <img src="assets/images/home.jpg" width="300" />
+  <img src="assets/images/pomodoro.jpg" width="300" />
+</p>
 ---
 
 ## Tech Stack
@@ -70,6 +68,7 @@ Task_Pomodoro/
 │   ├── index.tsx         # Welcome screen (username & avatar setup)
 │   ├── tabs/
 │   │   └── home.tsx      # Home screen with tasks
+│       └── pomodoro.tsx  # Pomodoro screen with timer
 │
 ├── assets/               # App images & icons
 ├── constants/
@@ -80,22 +79,11 @@ Task_Pomodoro/
 ```
 
 
-### Author
-##Brian Joshua Marcera
-##Minimalist UI/UX Designer & Software Engineer
-##GitHub
+## Author
 
-
-
-
-
-
-
-
-
-
-
-
+**Brian Joshua Marcera**  
+*Minimalist UI/UX Designer & Software Engineer*  
+[GitHub Profile](https://github.com/joshmrcr)
 
 
 
