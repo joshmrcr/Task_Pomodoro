@@ -17,9 +17,9 @@ Task Pomodoro is a **minimalist productivity app** built with **React Native** a
 ## Screenshots
 Here are some screens of the app:
 
-![Welcome Screen](assets/screenshots/welcome.jpg)
-![Home Screen](assets/screenshots/home.jpg)
-![Pomodoro Screen](assets/screenshots/pomodoro.jpg)
+![Welcome Screen](assets/images/welcome.jpg)
+![Home Screen](assets/images/home.jpg)
+![Pomodoro Screen](assets/images/pomodoro.jpg)
 
 
 ---
